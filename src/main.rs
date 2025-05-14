@@ -25,13 +25,20 @@ const NCELL: usize = DIM as usize / RS;
 #[derive(Debug)]
 pub struct Board {
     board: [[i8; DIM as usize / RS]; DIM as usize / RS],
+    snake: Snake,
+    food: Food,
 }
 
 impl Board {
     pub fn new() -> Self {
-        Board {
+        let mut b = Board {
             board: [[0; DIM as usize / RS]; DIM as usize / RS], // Initialize 30x30 grid with zeros
-        }
+            snake: Snake::new(),
+            food: Food::new(),
+        };
+        b.board[b.snake.pos.x][b.snake.pos.y] = 1;
+        b.board[b.food.pos.x][b.food.pos.y] = 3;
+        return b;
     }
     fn new_food(&mut self) -> (i8, i8) {
         let mut rng = rand::rng();
@@ -61,7 +68,19 @@ impl Board {
     }
 }
 
-#[derive(Clone, Copy)]
+#[derive(Debug)]
+struct Position {
+    x: usize,
+    y: usize,
+}
+
+impl Position {
+    fn new(x_n: usize, y_n: usize) -> Position {
+        Position { x: x_n, y: y_n }
+    }
+}
+
+#[derive(Clone, Copy, Debug)]
 enum Direction {
     Up,
     Down,
@@ -69,18 +88,21 @@ enum Direction {
     Right,
 }
 
+#[derive(Debug)]
 struct Snake {
+    pos: Position,
     direction: Direction,
     length: i32,
     body: Rect,
 }
 
 impl Snake {
-    fn new(r: Rect) -> Self {
+    fn new() -> Self {
         Snake {
+            pos: Position::new(NCELL / 2 - 1, NCELL / 2 - NCELL / 4),
             direction: Direction::Right,
             length: 1,
-            body: r,
+            body: Rect::new(0, 10 * RS as i32, RS as u32, RS as u32),
         }
     }
 
@@ -94,6 +116,28 @@ impl Snake {
             Direction::Down => self.body.set_y(self.body.y() + RS as i32),
             Direction::Left => self.body.set_x(self.body.x() - RS as i32),
             Direction::Right => self.body.set_x(self.body.x() + RS as i32),
+        }
+    }
+}
+
+#[derive(Debug)]
+struct Food {
+    pos: Position,
+}
+
+impl Food {
+    fn update() -> Food {
+        let mut rng = rand::rng();
+        let new_x = rng.random_range(0..(DIM as usize - RS) / RS);
+        let new_y = rng.random_range(0..(DIM as usize - RS) / RS);
+        Food {
+            pos: Position::new(new_x, new_y),
+        }
+    }
+
+    fn new() -> Food {
+        Food {
+            pos: Position::new(NCELL / 2 - 1, NCELL / 2 + NCELL / 4),
         }
     }
 }
@@ -126,7 +170,7 @@ fn main() {
     canvas.clear();
     let mut event_pump = sdl_context.event_pump().unwrap();
     let mut snake_body = Rect::new(0, 10 * RS as i32, RS as u32, RS as u32);
-    let mut snake = Snake::new(snake_body);
+    let mut snake = Snake::new();
     let mut i = 0;
 
     let mut flag: bool = true;
@@ -150,10 +194,10 @@ fn main() {
         // The rest of the game loop goes here...
 
         canvas.set_draw_color(Color::RGB(255, 255, 255));
-        snake.move_snake();
-        canvas.fill_rect(snake.body).unwrap();
+        board.snake.move_snake();
+        canvas.fill_rect(board.snake.body).unwrap();
 
-        let p = food_point(x, y);
+        let p = food_point(board.food.pos.x as i8, board.food.pos.y as i8);
         if flag {
             println!("{} {}", p.1, p.0);
             flag = false;
