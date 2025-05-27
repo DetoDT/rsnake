@@ -1,7 +1,7 @@
+// TODO: board update function
 // TODO: Represent snake on matrix
-// TODO: Keyboard change direction
 // TODO: Snake body grows and food reposition
-// TODO: Snake body follows body part in front of him
+// TODO: Snake body deletes last square and creates new one on head (movement)
 // TODO: Lose conditions
 // TODO: Win condition
 // TODO: Score and personal best
@@ -40,6 +40,9 @@ impl Board {
         b.board[b.food.pos.x][b.food.pos.y] = 3;
         return b;
     }
+
+    pub fn update(&mut self) {}
+
     fn new_food(&mut self) -> (i8, i8) {
         let mut rng = rand::rng();
         loop {
@@ -110,9 +113,13 @@ impl Snake {
         self.direction
     }
 
+    fn change_direction(&mut self, dir: Direction) {
+        self.direction = dir;
+    }
+
     fn move_snake(&mut self) {
         match self.direction {
-            Direction::Up => self.body.set_y(self.body.y() + RS as i32),
+            Direction::Up => self.body.set_y(self.body.y() - RS as i32),
             Direction::Down => self.body.set_y(self.body.y() + RS as i32),
             Direction::Left => self.body.set_x(self.body.x() - RS as i32),
             Direction::Right => self.body.set_x(self.body.x() + RS as i32),
@@ -177,6 +184,7 @@ fn main() {
 
     canvas.present();
     'running: loop {
+        board.update();
         i = (i + 1) % 255;
         // canvas.set_draw_color(Color::RGB(i, 64, 255 - i));
         canvas.set_draw_color(Color::RGB(0, 0, 0));
@@ -188,6 +196,38 @@ fn main() {
                     keycode: Some(Keycode::Escape),
                     ..
                 } => break 'running,
+                Event::KeyDown {
+                    keycode: Some(Keycode::W),
+                    ..
+                } => board.snake.change_direction(Direction::Up),
+                Event::KeyDown {
+                    keycode: Some(Keycode::A),
+                    ..
+                } => board.snake.change_direction(Direction::Left),
+                Event::KeyDown {
+                    keycode: Some(Keycode::S),
+                    ..
+                } => board.snake.change_direction(Direction::Down),
+                Event::KeyDown {
+                    keycode: Some(Keycode::D),
+                    ..
+                } => board.snake.change_direction(Direction::Right),
+                Event::KeyDown {
+                    keycode: Some(Keycode::UP),
+                    ..
+                } => board.snake.change_direction(Direction::Up),
+                Event::KeyDown {
+                    keycode: Some(Keycode::LEFT),
+                    ..
+                } => board.snake.change_direction(Direction::Left),
+                Event::KeyDown {
+                    keycode: Some(Keycode::DOWN),
+                    ..
+                } => board.snake.change_direction(Direction::Down),
+                Event::KeyDown {
+                    keycode: Some(Keycode::RIGHT),
+                    ..
+                } => board.snake.change_direction(Direction::Right),
                 _ => {}
             }
         }
@@ -209,6 +249,6 @@ fn main() {
         canvas.fill_rect(food).unwrap();
         canvas.present();
 
-        ::std::thread::sleep(Duration::new(1, 0));
+        ::std::thread::sleep(Duration::from_secs_f32(0.3));
     }
 }
