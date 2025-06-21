@@ -83,7 +83,7 @@ impl Position {
     }
 }
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 enum Direction {
     Up,
     Down,
@@ -119,10 +119,10 @@ impl Snake {
 
     fn move_snake(&mut self) {
         match self.direction {
-            Direction::Up => self.body.set_y(self.body.y() - RS as i32),
-            Direction::Down => self.body.set_y(self.body.y() + RS as i32),
-            Direction::Left => self.body.set_x(self.body.x() - RS as i32),
-            Direction::Right => self.body.set_x(self.body.x() + RS as i32),
+            Direction::Up => self.body.set_y((self.body.y() - RS as i32).rem_euclid(DIM)),
+            Direction::Down => self.body.set_y((self.body.y() + RS as i32) % DIM),
+            Direction::Left => self.body.set_x((self.body.x() - RS as i32).rem_euclid(DIM)),
+            Direction::Right => self.body.set_x((self.body.x() + RS as i32) % DIM),
         }
     }
 }
@@ -193,25 +193,41 @@ fn main() {
             match event {
                 Event::Quit { .. }
                 | Event::KeyDown {
-                    keycode: Some(Keycode::Escape),
+                    keycode: Some(Keycode::Escape | Keycode::Q),
                     ..
                 } => break 'running,
                 Event::KeyDown {
-                    keycode: Some(Keycode::W),
+                    keycode: Some(Keycode::W | Keycode::UP),
                     ..
-                } => board.snake.change_direction(Direction::Up),
+                } => {
+                    if board.snake.direction != Direction::Down {
+                        board.snake.change_direction(Direction::Up)
+                    }
+                }
                 Event::KeyDown {
-                    keycode: Some(Keycode::A),
+                    keycode: Some(Keycode::A | Keycode::LEFT),
                     ..
-                } => board.snake.change_direction(Direction::Left),
+                } => {
+                    if board.snake.direction != Direction::Right {
+                        board.snake.change_direction(Direction::Left)
+                    }
+                }
                 Event::KeyDown {
-                    keycode: Some(Keycode::S),
+                    keycode: Some(Keycode::S | Keycode::DOWN),
                     ..
-                } => board.snake.change_direction(Direction::Down),
+                } => {
+                    if board.snake.direction != Direction::Up {
+                        board.snake.change_direction(Direction::Down)
+                    }
+                }
                 Event::KeyDown {
-                    keycode: Some(Keycode::D),
+                    keycode: Some(Keycode::D | Keycode::RIGHT),
                     ..
-                } => board.snake.change_direction(Direction::Right),
+                } => {
+                    if board.snake.direction != Direction::Left {
+                        board.snake.change_direction(Direction::Right)
+                    }
+                }
                 Event::KeyDown {
                     keycode: Some(Keycode::UP),
                     ..
